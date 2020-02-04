@@ -9,11 +9,11 @@ typedef enum { false, true } bool; //https://stackoverflow.com/questions/1921539
 
 char* room_names[10] = { "LIVING_ROOM", "KITCHEN", "DINING_ROOM", "BEDROOM", "BATHROOM", "GARAGE", "CLOSET", "LAUNDRY_ROOM", "TORTURE_ROOM", "ATTIC"};
 
-enum room_types{ START_ROOM, MID_ROOM, END_ROOM};
+char* room_types[3] = { "START_ROOM", "MID_ROOM", "END_ROOM"};
 
 struct ROOM{
    char* name;
-   int type;
+   char* type;
    int num_connections;
    struct ROOM* connections[6];
 };
@@ -28,6 +28,14 @@ void InitializeRoom(int room_num, int rooms_made)
    all_rooms[rooms_made] = new_room;
 
 }
+void CreateRoomType(){
+   int i;
+   all_rooms[0]->type = room_types[0];
+   all_rooms[6]->type = room_types[2];
+   for(i = 1; i < 6; i++){
+      all_rooms[i]->type = room_types[1];
+   }
+}
 
 void CreateRoomDirectory()
 {
@@ -41,13 +49,23 @@ void CreateRoomDirectory()
 
 void CreateRoomFiles()
 {
-   int i;
+   int i,j;
    for(i = 0; i < 7; i++){
       FILE* room_file;
       char pathFile[256];
       memset(pathFile,'\0',256);
       sprintf(pathFile, "doerflea.rooms.%d/%s",getpid(),all_rooms[i]->name);
       room_file = fopen(pathFile, "w");
+      
+      //print room name to file
+      fprintf(room_file, "ROOM NAME: %s\n", all_rooms[i]->name);
+
+      //print connections
+      for(j = 0; j < all_rooms[i]->num_connections; j++){
+	fprintf(room_file, "CONNECTION %d: %s\n", j+1, all_rooms[i]->connections[j]->name);
+      }
+      //print room type
+   	fprintf(room_file, "ROOM TYPE: %s\n", all_rooms[i]->type);
       fclose(room_file);
    }
 }
@@ -132,6 +150,7 @@ bool ConnectionAlreadyExists(struct ROOM* a, struct ROOM* b)
 	 return true;
       }
    }
+   
    return false;
 }
 
@@ -167,21 +186,23 @@ void AddRandomConnection()
    }
    while(CanAddConnectionFrom(B) == false || IsSameRoom(A, B) == true || ConnectionAlreadyExists(A, B) == true);
 
-   ConnectRoom(A, B);  // TODO: Add this connection to the real variables, 
-   ConnectRoom(B, A);  //  because this A and B will be destroyed when this function terminates
+   ConnectRoom(A, B);  // TODO: Add this connection to the real variables
+   if(ConnectionAlreadyExists(B,A) == false) 
+   	ConnectRoom(B, A);  //  because this A and B will be destroyed when this function terminates
 }
 
 
 int main(){
-   srand(time(0));
+   srand(time(NULL));
    CreateRoomDirectory();
    CreateRooms();
    // Create all connections in graph
-   /*while (IsGraphFull() == false)
+   while (IsGraphFull() == false)
    {
       //printf("Graph full loop");
       AddRandomConnection();
-   }*/
-     CreateRoomFiles();
+   }
+   CreateRoomType();
+   CreateRoomFiles();
 
 }
