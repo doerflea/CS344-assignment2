@@ -7,6 +7,9 @@
 #include <unistd.h>
 #include<fcntl.h>
 
+typedef enum { false, true } bool; //https://stackoverflow.com/questions/1921539/using-boolean-values-in-c
+
+
 char* getNewestRoomDir(){
    int newestDirTime = -1; // Modified timestamp of newest subdir examined
    char targetDirPrefix[32] = "doerflea.rooms."; // Prefix we're looking for
@@ -59,13 +62,11 @@ void getRooms(char* newestDirName,const char* rooms[7]){
 	 memset(filePath,'\0',50);
 
 	 sprintf(filePath, "%s/%s",newestDirName,room_file->d_name);
-	 //printf("%s", filePath);
 
 	 FILE* room_file;
 	 char* line = NULL;
 	 size_t length = 0;
 	 ssize_t read;
-	 //char* room_type = "MID_ROOM";
 
 	 room_file = fopen(filePath, "r");
 	 if(room_file == NULL){
@@ -81,7 +82,13 @@ void getRooms(char* newestDirName,const char* rooms[7]){
 
 
 
-void readRoomFile(char* newestDirName, const char* rooms[7],int i){
+void readRoomFile(char* newestDirName, const char* rooms){
+
+
+   printf("CURRENT LOCATION: %s\n", rooms);
+   char possible_connections[6][15];
+   int i = 0;
+
    DIR* dir;
    struct dirent *room_file;
 
@@ -89,8 +96,7 @@ void readRoomFile(char* newestDirName, const char* rooms[7],int i){
    char filePath[50];
    memset(filePath,'\0',50);
 
-   sprintf(filePath, "%s/%s",newestDirName,rooms[i]);
-   //printf("%s", filePath);
+   sprintf(filePath, "%s/%s",newestDirName,rooms);
 
    FILE* room;
    char* line = NULL;
@@ -102,10 +108,9 @@ void readRoomFile(char* newestDirName, const char* rooms[7],int i){
       printf("NULL");
       return;
    }
-   printf("POSSIBLE CONNECTIONS: ");
+   char connections[100];
+   memset(connections, '\0',100);
    while((read = getline(&line, &length,room)) != -1){
-      //printf("line length: %zu\n", read);
-      //printf("line: %s", line);
       char buf_name[100];
       memset(buf_name, '\0',100);
       char buf_connection[100];
@@ -113,18 +118,51 @@ void readRoomFile(char* newestDirName, const char* rooms[7],int i){
       char buf_room[100];
       memset(buf_room,'\0',100);
 
-      
+
       sscanf(line,"%s%s%s",buf_connection, buf_name,buf_room);
-      if(strstr(buf_connection,"CONNECTION") !=NULL){
-	 printf("%s, ", buf_room);
+      if(strstr(buf_room,"END_ROOM") !=NULL){
+	 printf("YOU HAVE FOUND THE END ROOM. CONGRATULATIONS\n");
+	 return;
       }
-      else{
-	 printf(".\n");
+      if(strstr(buf_connection,"CONNECTION") !=NULL){
+	 char name[15];
+	 memset(name,'\0',15);
+	 sprintf(connections,"%s%s ",connections, buf_room);
+	 sprintf(name, "%s",buf_room);
+	 strcpy(possible_connections[i],name);
+	 i++;
       }
 
    }
-   closedir(dir);
+   int j;
+   char answer[100];
+   memset(answer, '\0',100);
+   printf("POSSIBLE CONNECTIONS: %s\n", connections);
+   printf("WHERE TO?>");
+   scanf("%s",&answer);
+   bool valid_answer = false;
+   for(j = 0; j < i; j++){
+      if(strcmp(answer,possible_connections[j]) == 0){
+	 valid_answer = true;
+      }
+   }
+   while(valid_answer == false){
+      printf("WHERE TO?>");
+      scanf("%s",&answer);
+      for(j = 0; j < i; j++){
+	 if(strcmp(answer,possible_connections[j]) == 0){
+	    valid_answer = true;
+	 }
+      }
+
+   }
+   readRoomFile(newestDirName, answer);
 }
+
+
+
+
+
 int getStartRoom(char* newestDirName, const char* rooms[7]){
    DIR* dir;
    struct dirent *room_file;
@@ -175,16 +213,13 @@ void main()
    const char* rooms[7];
 
    getRooms(newestDirName,rooms);
-   readRoomFile(newestDirName,rooms, 1);
-
    int start_index = getStartRoom(newestDirName,rooms);
 
-   char* curr_room = "START_ROOM";
+   readRoomFile(newestDirName,rooms[start_index]);
 
-   if(strcmp(curr_room,"END_ROOM") !=0){
-      printf("CURRENT LOCATION:%s\n", rooms[start_index]);
-   }
-   /
+
+   // printf("CURRENT LOCATION:%s\n", rooms[start_index]);
+
    /*for(i = 0; i < 7; i++){
      printf("rooms %s\n",rooms[i]);
      }*/
