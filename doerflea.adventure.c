@@ -5,8 +5,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-char* getNewRoomFile(){
-int newestDirTime = -1; // Modified timestamp of newest subdir examined
+char* getNewestRoomDir(){
+   int newestDirTime = -1; // Modified timestamp of newest subdir examined
    char targetDirPrefix[32] = "doerflea.rooms."; // Prefix we're looking for
    static char newestDirName[256]; // Holds the name of the newest dir that contains prefix
    memset(newestDirName, '\0', sizeof(newestDirName));
@@ -38,20 +38,41 @@ int newestDirTime = -1; // Modified timestamp of newest subdir examined
    return newestDirName;
 }
 
-void main()
-{
-   char* newestDirName = getNewRoomFile();
-   //getNewRoomFile(newestDirName);
-
+void getRooms(char* newestDirName, const char* rooms[7]){
    char* dot = ".";
    char* dotdot = "..";
    DIR* dir;
    struct dirent *room_file;
+   int i = 0;
    dir = opendir(newestDirName);
    while ((room_file = readdir(dir)) != NULL) {
-      if(strcmp(room_file->d_name, dot) !=0 && strcmp(room_file->d_name,dotdot) != 0)
-        printf("%s\n", room_file->d_name); //print all directory name
+      if(strcmp(room_file->d_name, dot) !=0 && strcmp(room_file->d_name,dotdot) != 0){
+	 rooms[i] = room_file->d_name;
+	 i++;
+      }
    }
-   closedir(dir);
-
+     closedir(dir);
 }
+void readRoomFile(char* newestDirName, const char* rooms[7]){
+   char filePath[50];
+   memset(filePath,'\0',50);
+   sprintf(filePath, "%s",rooms[0]);
+
+   FILE* room_file;
+   chdir(newestDirName);
+   room_file = fopen(filePath, "r");
+   fclose(room_file);
+}
+
+void main()
+{
+   char* newestDirName = getNewestRoomDir();
+   const char *rooms[7];
+   getRooms(newestDirName, rooms);
+   readRoomFile(newestDirName, rooms);
+}
+
+   
+
+   
+
