@@ -66,6 +66,7 @@ void CreateRoomFiles()
       }
       //print room type
    	fprintf(room_file, "ROOM TYPE: %s\n", all_rooms[i]->type);
+	free(all_rooms[i]);
       fclose(room_file);
    }
 }
