@@ -5,11 +5,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-void main()
-{
-   int newestDirTime = -1; // Modified timestamp of newest subdir examined
+char* getNewRoomFile(){
+int newestDirTime = -1; // Modified timestamp of newest subdir examined
    char targetDirPrefix[32] = "doerflea.rooms."; // Prefix we're looking for
-   char newestDirName[256]; // Holds the name of the newest dir that contains prefix
+   static char newestDirName[256]; // Holds the name of the newest dir that contains prefix
    memset(newestDirName, '\0', sizeof(newestDirName));
 
    DIR* dirToCheck; // Holds the directory we're starting in
@@ -24,7 +23,6 @@ void main()
       {
 	 if (strstr(fileInDir->d_name, targetDirPrefix) != NULL) // If entry has prefix
 	 {
-	    printf("Found the prefex: %s\n", fileInDir->d_name);
 	    stat(fileInDir->d_name, &dirAttributes); // Get attributes of the entry
 
 	    if ((int)dirAttributes.st_mtime > newestDirTime) // If this time is bigger
@@ -32,14 +30,28 @@ void main()
 	       newestDirTime = (int)dirAttributes.st_mtime;
 	       memset(newestDirName, '\0', sizeof(newestDirName));
 	       strcpy(newestDirName, fileInDir->d_name);
-	       printf("Newer subdir: %s, new time: %d\n",
-		     fileInDir->d_name, newestDirTime);
 	    }
 	 }
       }
    }
-
    closedir(dirToCheck); // Close the directory we opened
+   return newestDirName;
+}
 
-   printf("Newest entry found is: %s\n", newestDirName);
+void main()
+{
+   char* newestDirName = getNewRoomFile();
+   //getNewRoomFile(newestDirName);
+
+   char* dot = ".";
+   char* dotdot = "..";
+   DIR* dir;
+   struct dirent *room_file;
+   dir = opendir(newestDirName);
+   while ((room_file = readdir(dir)) != NULL) {
+      if(strcmp(room_file->d_name, dot) !=0 && strcmp(room_file->d_name,dotdot) != 0)
+        printf("%s\n", room_file->d_name); //print all directory name
+   }
+   closedir(dir);
+
 }
