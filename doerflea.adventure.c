@@ -5,9 +5,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include<fcntl.h>
+#include <time.h>
+#include <pthread.h>
 
 typedef enum { false, true } bool; //https://stackoverflow.com/questions/1921539/using-boolean-values-in-c
+
+char* time_file = "currentTime.txt";
+pthread_mutex_t time_file_ptr;
 
 
 char* getNewestRoomDir(){
@@ -82,7 +86,7 @@ void getRooms(char* newestDirName,const char* rooms[7]){
 
 
 
-void readRoomFile(char* newestDirName, const char* rooms){
+void readRoomFile(char* newestDirName, const char* rooms,int steps){
 
 
    printf("CURRENT LOCATION: %s\n", rooms);
@@ -122,6 +126,7 @@ void readRoomFile(char* newestDirName, const char* rooms){
       sscanf(line,"%s%s%s",buf_connection, buf_name,buf_room);
       if(strstr(buf_room,"END_ROOM") !=NULL){
 	 printf("YOU HAVE FOUND THE END ROOM. CONGRATULATIONS\n");
+	 printf("YOU TOOK %d STEPS\n",steps);
 	 return;
       }
       if(strstr(buf_connection,"CONNECTION") !=NULL){
@@ -156,7 +161,8 @@ void readRoomFile(char* newestDirName, const char* rooms){
       }
 
    }
-   readRoomFile(newestDirName, answer);
+   steps++;
+   readRoomFile(newestDirName, answer,steps);
 }
 
 
@@ -206,24 +212,17 @@ int getStartRoom(char* newestDirName, const char* rooms[7]){
 
 
 
-void main()
+int main()
 {
-   int i;
    char* newestDirName = getNewestRoomDir();
    const char* rooms[7];
 
    getRooms(newestDirName,rooms);
    int start_index = getStartRoom(newestDirName,rooms);
+   int steps = 0;
 
-   readRoomFile(newestDirName,rooms[start_index]);
-
-
-   // printf("CURRENT LOCATION:%s\n", rooms[start_index]);
-
-   /*for(i = 0; i < 7; i++){
-     printf("rooms %s\n",rooms[i]);
-     }*/
-
+   readRoomFile(newestDirName,rooms[start_index],steps);
+   return 0;
 
 
 }
