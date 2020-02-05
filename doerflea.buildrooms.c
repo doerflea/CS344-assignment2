@@ -15,23 +15,24 @@ struct ROOM{
    char* name;
    char* type;
    int num_connections;
-   struct ROOM* connections[6];
+   struct ROOM* connections[6]; 
 };
 
 struct ROOM* all_rooms[7];
 
 void InitializeRoom(int room_num, int rooms_made)
 {
-   struct ROOM* new_room = malloc(sizeof(struct ROOM));
-   new_room->name = room_names[room_num];
+   struct ROOM* new_room = malloc(sizeof(struct ROOM)); //Allocate memory for new room
+   new_room->name = room_names[room_num]; //Take room name from names array using random index passed by CreateRoom function
    new_room->num_connections = 0;
    all_rooms[rooms_made] = new_room;
 
 }
 void CreateRoomType(){
    int i;
-   all_rooms[0]->type = room_types[0];
-   all_rooms[6]->type = room_types[2];
+   all_rooms[0]->type = room_types[0]; //Assign one room as start room
+   all_rooms[6]->type = room_types[2]; //Assign one room as end room
+   //Assign remaining rooms as mid rooms
    for(i = 1; i < 6; i++){
       all_rooms[i]->type = room_types[1];
    }
@@ -42,7 +43,7 @@ void CreateRoomDirectory()
    char* directory_name = malloc(sizeof(char)*20);
    char* static_dirname = "doerflea.rooms.";
    int pid = getpid();
-   sprintf(directory_name, "%s%d", static_dirname, pid);
+   sprintf(directory_name, "%s%d", static_dirname, pid); //Create directory name using onid user name and process id
    mkdir(directory_name, 0755);
    free(directory_name);
 }
@@ -80,14 +81,14 @@ void CreateRooms()
    int i = 0;
    int length = 0;
 
-   while(rooms_made_num < 7){
-      int room_num = rand() % 10;
+   while(rooms_made_num < 7){ //Make 7 rooms
+      int room_num = rand() % 10; //Get random index number to take from room name array
       for(i = 0; i < 7; i++){
-	 if(room_num == rooms_made[i]){
+	 if(room_num == rooms_made[i]){ //If index already matches one made, increment match check variable
 	    room_match_check++;
 	 }
       }
-      if(room_match_check == 0){
+      if(room_match_check == 0){ //If no matches were found, create new room
 	 InitializeRoom(room_num, rooms_made_num);
 	 rooms_made[rooms_made_num] = room_num;
 	 rooms_made_num++;
@@ -204,6 +205,8 @@ int main(){
    }
    CreateRoomType();
    CreateRoomFiles();
+
+   //Free memory allocated for room structs
    int i;
    for(i = 0; i < 7; i++){
       free(all_rooms[i]);
