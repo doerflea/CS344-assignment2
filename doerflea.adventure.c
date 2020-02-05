@@ -86,11 +86,11 @@ void getRooms(char* newestDirName,const char* rooms[7]){
 
 
 
-void readRoomFile(char* newestDirName, const char* rooms,int steps){
-
+void readRoomFile(char* newestDirName, const char* rooms,int steps,char path[40][15]){
 
    printf("CURRENT LOCATION: %s\n", rooms);
    char possible_connections[6][15];
+   strcpy(path[steps],rooms);
    int i = 0;
 
    DIR* dir;
@@ -126,9 +126,14 @@ void readRoomFile(char* newestDirName, const char* rooms,int steps){
       sscanf(line,"%s%s%s",buf_connection, buf_name,buf_room);
       if(strstr(buf_room,"END_ROOM") !=NULL){
 	 printf("YOU HAVE FOUND THE END ROOM. CONGRATULATIONS\n");
-	 printf("YOU TOOK %d STEPS\n",steps);
+	 printf("YOU TOOK %d STEPS. YOUR PATH TO VICTORY WAS:\n",steps);
+	 int k;
+	 for(k = 1; k <= steps; k++){
+	    printf("%s\n",path[k]);
+	 }
 	 return;
       }
+
       if(strstr(buf_connection,"CONNECTION") !=NULL){
 	 char name[15];
 	 memset(name,'\0',15);
@@ -162,7 +167,8 @@ void readRoomFile(char* newestDirName, const char* rooms,int steps){
 
    }
    steps++;
-   readRoomFile(newestDirName, answer,steps);
+   printf("\n\n");
+   readRoomFile(newestDirName, answer,steps,path);
 }
 
 
@@ -216,12 +222,12 @@ int main()
 {
    char* newestDirName = getNewestRoomDir();
    const char* rooms[7];
-
+   char path[40][15];
    getRooms(newestDirName,rooms);
    int start_index = getStartRoom(newestDirName,rooms);
    int steps = 0;
 
-   readRoomFile(newestDirName,rooms[start_index],steps);
+   readRoomFile(newestDirName,rooms[start_index],steps,path);
    return 0;
 
 
