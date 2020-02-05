@@ -10,9 +10,6 @@
 
 typedef enum { false, true } bool; //https://stackoverflow.com/questions/1921539/using-boolean-values-in-c
 
-char* time_file = "currentTime.txt";
-pthread_mutex_t time_file_ptr;
-
 
 char* getNewestRoomDir(){
    int newestDirTime = -1; // Modified timestamp of newest subdir examined
@@ -89,8 +86,11 @@ void getRooms(char* newestDirName,const char* rooms[7]){
 void readRoomFile(char* newestDirName, const char* rooms,int steps,char path[40][15]){
 
    printf("CURRENT LOCATION: %s\n", rooms);
+
    char possible_connections[6][15];
+
    strcpy(path[steps],rooms);
+
    int i = 0;
 
    DIR* dir;
@@ -115,15 +115,15 @@ void readRoomFile(char* newestDirName, const char* rooms,int steps,char path[40]
    char connections[100];
    memset(connections, '\0',100);
    while((read = getline(&line, &length,room)) != -1){
-      char buf_name[100];
-      memset(buf_name, '\0',100);
+
       char buf_connection[100];
       memset(buf_connection,'\0',100);
+
       char buf_room[100];
       memset(buf_room,'\0',100);
 
+      sscanf(line,"%s%*s%s",buf_connection,buf_room);
 
-      sscanf(line,"%s%s%s",buf_connection, buf_name,buf_room);
       if(strstr(buf_room,"END_ROOM") !=NULL){
 	 printf("YOU HAVE FOUND THE END ROOM. CONGRATULATIONS\n");
 	 printf("YOU TOOK %d STEPS. YOUR PATH TO VICTORY WAS:\n",steps);
@@ -135,11 +135,7 @@ void readRoomFile(char* newestDirName, const char* rooms,int steps,char path[40]
       }
 
       if(strstr(buf_connection,"CONNECTION") !=NULL){
-	 char name[15];
-	 memset(name,'\0',15);
-	 //sprintf(connections,"%s%s,",connections, buf_room);
-	 sprintf(name, "%s",buf_room);
-	 strcpy(possible_connections[i],name);
+	 strcpy(possible_connections[i],buf_room);
 	 i++;
       }
    }
@@ -149,13 +145,14 @@ void readRoomFile(char* newestDirName, const char* rooms,int steps,char path[40]
    }
    sprintf(connections,"%s%s.",connections,possible_connections[i-1]);
 
-       int j;
    char answer[100];
    memset(answer, '\0',100);
    printf("POSSIBLE CONNECTIONS: %s\n", connections);
    printf("WHERE TO?>");
    scanf("%s",&answer);
    bool valid_answer = false;
+
+   int j;
    for(j = 0; j < i; j++){
       if(strcmp(answer,possible_connections[j]) == 0){
 	 valid_answer = true;
@@ -219,19 +216,56 @@ int getStartRoom(char* newestDirName, const char* rooms[7]){
    }
    return -1;
 }
+void writeTime(){
+   
+   //https://www.epochconverter.com/programming/c
+   //https://stackoverflow.com/questions/13644182/wrong-time-with-localtime
 
+   time_t curr_time;
+   FILE* time_file;
 
+   time_file = fopen("currentTime.txt","w");
+
+   struct tm* time_info;
+
+   time(&curr_time);
+   time_info = localtime(&curr_time);
+
+   char time_str[100];
+   memset(time_str, '\0',100); 
+   strftime(time_str,100, "%I:%M%P %A, %B %d, %Y", time_info); // format string.
+
+   fprintf(time_file, "%s",time_str);
+   fclose(time_file);
+}
+
+void getTime(){
+   FILE* time_file;
+   time_file = fopen("currentTime.txt", "r");
+   char buf[100];
+   memset(buf,'\0',100);
+   while(fgets(buf,100,time_file) != NULL){
+      printf("%s\n",buf);
+   }
+   fclose(time_file);
+}
+
+/*void createThread(){
+   pthread_t writet_thread;
+   pthread_create(&writet_thread, NULL, writeTime, NULL); //id_new_thread, flags, start_routine, args
+}*/
 
 
 int main()
 {
+writeTime();
+
    char* newestDirName = getNewestRoomDir();
    const char* rooms[7];
    char path[40][15];
    getRooms(newestDirName,rooms);
    int start_index = getStartRoom(newestDirName,rooms);
    int steps = 0;
-
    readRoomFile(newestDirName,rooms[start_index],steps,path);
    return 0;
 
