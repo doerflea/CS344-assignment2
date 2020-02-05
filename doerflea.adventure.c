@@ -10,6 +10,87 @@
 
 typedef enum { false, true } bool; //https://stackoverflow.com/questions/1921539/using-boolean-values-in-c
 
+pthread_mutex_t mutex;
+
+
+void* writeTime(){
+
+   //https://www.epochconverter.com/programming/c
+   //https://stackoverflow.com/questions/13644182/wrong-time-with-localtime
+
+   time_t curr_time; //Create time datatype object
+
+   //Open currentTime.txt if already created, if not, the create file
+   FILE* time_file;
+   time_file = fopen("currentTime.txt","w");
+
+   struct tm* time_info;
+   time(&curr_time);
+   time_info = localtime(&curr_time);
+
+   char time_str[100];
+   memset(time_str, '\0',100); 
+   strftime(time_str,100, "%I:%M%P %A, %B %d, %Y", time_info); // format string: hour, weekday, month, day, year
+
+   fprintf(time_file, "%s",time_str); //Write time to file
+
+   //Close file
+   fclose(time_file); 
+   return NULL;
+}
+
+void* readTime(){
+
+   //Open time file
+   FILE* time_file;
+   time_file = fopen("currentTime.txt", "r");
+
+   char buf[100];
+   memset(buf,'\0',100);
+
+   while(fgets(buf,100,time_file) != NULL){ //read in time file info
+      printf("%s\n",buf); //print to screen
+   }
+   //Close time file
+   fclose(time_file);
+   return NULL;
+}
+
+
+
+void writerThread(){
+
+   pthread_mutex_init(&mutex, NULL);
+   pthread_mutex_lock(&mutex);
+
+   pthread_t writet_thread;
+   int wthread = pthread_create(&writet_thread, NULL, writeTime, NULL); //id_new_thread, flags, start_routine, args
+
+   pthread_mutex_unlock(&mutex);
+   pthread_mutex_destroy(&mutex);
+
+   pthread_join(writet_thread,NULL);
+   return;
+}
+
+void readerThread(){
+   pthread_mutex_init(&mutex, NULL);
+   pthread_mutex_lock(&mutex);
+
+   pthread_t readt_thread;
+   int rthread = pthread_create(&readt_thread, NULL, readTime, NULL); //id_new_thread, flags, start_routine, args
+
+   pthread_mutex_unlock(&mutex);
+   pthread_mutex_destroy(&mutex);
+
+   pthread_join(readt_thread,NULL);
+   return;
+
+
+}
+
+
+
 
 char* getNewestRoomDir(){
    int newestDirTime = -1; // Modified timestamp of newest subdir examined
@@ -147,10 +228,23 @@ void readRoomFile(char* newestDirName, const char* rooms,int steps,char path[40]
 
    char answer[100];
    memset(answer, '\0',100);
+   bool valid_answer = false; 
+
    printf("POSSIBLE CONNECTIONS: %s\n", connections);
-   printf("WHERE TO?>");
-   scanf("%s",&answer);
-   bool valid_answer = false;
+
+   do{
+      printf("WHERE TO?>");
+      scanf("%s",&answer);
+
+      if(strcmp(answer,"time") == 0){
+	 printf("\n");
+	 writerThread();
+	 readerThread();
+	 printf("\n");
+      }
+
+   }while(strcmp(answer,"time") == 0);
+
 
    int j;
    for(j = 0; j < i; j++){
@@ -158,9 +252,27 @@ void readRoomFile(char* newestDirName, const char* rooms,int steps,char path[40]
 	 valid_answer = true;
       }
    }
-   while(valid_answer == false){
+   if(valid_answer == false){
+      printf("\n");
+      printf("HUH? I DON'T UNDERSTAND THAT ROOM. TRY AGAIN.\n\n");
+      
+      printf("CURRENT LOCATION: %s\n", rooms);
+      printf("POSSIBLE CONNECTIONS: %s\n", connections);
       printf("WHERE TO?>");
       scanf("%s",&answer);
+
+      while(strcmp(answer,"time") == 0){
+
+         printf("\n");
+	 writerThread();
+	 readerThread();
+	 printf("\n");
+
+         printf("WHERE TO?>");
+         scanf("%s",&answer);
+
+      }
+
       for(j = 0; j < i; j++){
 	 if(strcmp(answer,possible_connections[j]) == 0){
 	    valid_answer = true;
@@ -172,9 +284,6 @@ void readRoomFile(char* newestDirName, const char* rooms,int steps,char path[40]
    printf("\n\n");
    readRoomFile(newestDirName, answer,steps,path);
 }
-
-
-
 
 
 int getStartRoom(char* newestDirName, const char* rooms[7]){
@@ -216,50 +325,11 @@ int getStartRoom(char* newestDirName, const char* rooms[7]){
    }
    return -1;
 }
-void writeTime(){
-   
-   //https://www.epochconverter.com/programming/c
-   //https://stackoverflow.com/questions/13644182/wrong-time-with-localtime
 
-   time_t curr_time;
-   FILE* time_file;
-
-   time_file = fopen("currentTime.txt","w");
-
-   struct tm* time_info;
-
-   time(&curr_time);
-   time_info = localtime(&curr_time);
-
-   char time_str[100];
-   memset(time_str, '\0',100); 
-   strftime(time_str,100, "%I:%M%P %A, %B %d, %Y", time_info); // format string.
-
-   fprintf(time_file, "%s",time_str);
-   fclose(time_file);
-}
-
-void getTime(){
-   FILE* time_file;
-   time_file = fopen("currentTime.txt", "r");
-   char buf[100];
-   memset(buf,'\0',100);
-   while(fgets(buf,100,time_file) != NULL){
-      printf("%s\n",buf);
-   }
-   fclose(time_file);
-}
-
-/*void createThread(){
-   pthread_t writet_thread;
-   pthread_create(&writet_thread, NULL, writeTime, NULL); //id_new_thread, flags, start_routine, args
-}*/
 
 
 int main()
 {
-writeTime();
-
    char* newestDirName = getNewestRoomDir();
    const char* rooms[7];
    char path[40][15];
