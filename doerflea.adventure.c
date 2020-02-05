@@ -137,14 +137,19 @@ void readRoomFile(char* newestDirName, const char* rooms,int steps,char path[40]
       if(strstr(buf_connection,"CONNECTION") !=NULL){
 	 char name[15];
 	 memset(name,'\0',15);
-	 sprintf(connections,"%s%s ",connections, buf_room);
+	 //sprintf(connections,"%s%s,",connections, buf_room);
 	 sprintf(name, "%s",buf_room);
 	 strcpy(possible_connections[i],name);
 	 i++;
       }
-
    }
-   int j;
+   int k;
+   for(k = 0; k < i-1; k++){
+      sprintf(connections,"%s%s, ",connections,possible_connections[k]);
+   }
+   sprintf(connections,"%s%s.",connections,possible_connections[i-1]);
+
+       int j;
    char answer[100];
    memset(answer, '\0',100);
    printf("POSSIBLE CONNECTIONS: %s\n", connections);
